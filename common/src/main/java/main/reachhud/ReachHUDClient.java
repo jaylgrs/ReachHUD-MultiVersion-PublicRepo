@@ -13,15 +13,13 @@ public class ReachHUDClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ReachHudConfig.load();
-
         ReachHudKeybind.register();
+        ReachHudRenderer.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ReachHudKeybind.update();
             TargetTracker.update(client);
             ProjectileAimTracker.update(client);
         });
-
-        ReachHudRenderer.register();
     }
 }

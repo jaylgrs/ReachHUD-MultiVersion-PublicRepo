@@ -2,6 +2,7 @@ package main.reachhud.reach;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -32,7 +33,7 @@ public final class ReachCalculator {
         }
 
         return client.player.getAttributeValue(
-                net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE
+                Attributes.ENTITY_INTERACTION_RANGE
         );
     }
 

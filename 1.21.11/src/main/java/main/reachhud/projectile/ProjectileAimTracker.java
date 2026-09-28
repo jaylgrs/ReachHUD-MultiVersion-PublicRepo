@@ -1,30 +1,18 @@
 package main.reachhud.projectile;
 
+import main.reachhud.reach.ReachCalculator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Optional;
+
 public final class ProjectileAimTracker {
 
     private static final double MAX_AIM_DISTANCE = 64.0;
-
-    /*
-     * Vanilla crossbow arrow projectile speed.
-     */
     private static final double CROSSBOW_ARROW_SPEED = 3.15;
-
-    /*
-     * Firework rocket initial projectile speed.
-     *
-     * Firework rockets use their own projectile movement,
-     * so they are simulated separately from arrows.
-     */
     private static final double FIREWORK_SPEED = 1.6;
-
-    /*
-     * Vanilla Multishot spread.
-     */
     private static final double MULTISHOT_SPREAD_DEGREES = 10.0;
 
     private static Entity currentTarget;
@@ -40,36 +28,24 @@ public final class ProjectileAimTracker {
             return;
         }
 
-        ProjectileWeaponState weaponState =
-                ProjectileWeaponState.detect(client);
+        ProjectileWeaponState weaponState = ProjectileWeaponState.detect(client);
 
         if (!weaponState.isProjectileWeapon()) {
             clearState();
             return;
         }
 
-        /*
-         * A bow only has a projectile trajectory while it
-         * is actually being drawn.
-         */
-        if (weaponState.isBow()
-                && !weaponState.isUsingWeapon()) {
+        if (weaponState.isBow() && !weaponState.isUsingWeapon()) {
             clearState();
             return;
         }
 
-        /*
-         * A crossbow only has a projectile trajectory when
-         * it already contains a loaded projectile.
-         */
-        if (weaponState.isCrossbow()
-                && !weaponState.isLoaded()) {
+        if (weaponState.isCrossbow() && !weaponState.isLoaded()) {
             clearState();
             return;
         }
 
-        Entity target =
-                findAimedEntity(client);
+        Entity target = findAimedEntity(client);
 
         if (target == null) {
             clearState();
@@ -78,20 +54,12 @@ public final class ProjectileAimTracker {
 
         currentTarget = target;
 
-        Vec3 startPosition =
-                client.player.getEyePosition();
+        Vec3 startPosition = client.player.getEyePosition();
+        Vec3 direction = client.player.getViewVector(1.0F);
 
-        Vec3 direction =
-                client.player.getViewVector(1.0F);
+        AABB targetBox = target.getBoundingBox()
+                .inflate(target.getPickRadius());
 
-        AABB targetBox =
-                target.getBoundingBox()
-                        .inflate(target.getPickRadius());
-
-        /*
-         * Firework Rocket uses completely separate
-         * projectile physics.
-         */
         if (weaponState.isFirework()) {
             willHit = simulateFirework(
                     startPosition,
@@ -99,17 +67,13 @@ public final class ProjectileAimTracker {
                     targetBox
             );
         } else {
-            double projectileSpeed =
-                    getProjectileSpeed(weaponState);
+            double projectileSpeed = getProjectileSpeed(weaponState);
 
             if (projectileSpeed <= 0.0) {
                 clearState();
                 return;
             }
 
-            /*
-             * Normal Arrow / Crossbow Arrow.
-             */
             if (!weaponState.hasMultishot()) {
                 willHit = simulateTrajectory(
                         startPosition,
@@ -118,13 +82,6 @@ public final class ProjectileAimTracker {
                         targetBox
                 );
             } else {
-                /*
-                 * Multishot:
-                 *
-                 * Center
-                 * -10 degrees
-                 * +10 degrees
-                 */
                 willHit = simulateMultishot(
                         startPosition,
                         direction,
@@ -134,11 +91,7 @@ public final class ProjectileAimTracker {
             }
         }
 
-        targetDistance =
-                getDistanceToTarget(
-                        startPosition,
-                        target
-                );
+        targetDistance = ReachCalculator.getDistanceTo(target);
     }
 
     private static boolean simulateTrajectory(
@@ -147,8 +100,7 @@ public final class ProjectileAimTracker {
             double projectileSpeed,
             AABB targetBox
     ) {
-        Vec3 initialVelocity =
-                direction.scale(projectileSpeed);
+        Vec3 initialVelocity = direction.scale(projectileSpeed);
 
         ProjectilePhysics.TrajectoryResult result =
                 ProjectilePhysics.simulate(
@@ -165,8 +117,7 @@ public final class ProjectileAimTracker {
             Vec3 direction,
             AABB targetBox
     ) {
-        Vec3 initialVelocity =
-                direction.scale(FIREWORK_SPEED);
+        Vec3 initialVelocity = direction.scale(FIREWORK_SPEED);
 
         FireworkPhysics.TrajectoryResult result =
                 FireworkPhysics.simulate(
@@ -184,9 +135,6 @@ public final class ProjectileAimTracker {
             double projectileSpeed,
             AABB targetBox
     ) {
-        /*
-         * Center projectile.
-         */
         if (simulateTrajectory(
                 startPosition,
                 direction,
@@ -196,14 +144,10 @@ public final class ProjectileAimTracker {
             return true;
         }
 
-        /*
-         * Left projectile.
-         */
-        Vec3 leftDirection =
-                rotateAroundY(
-                        direction,
-                        -MULTISHOT_SPREAD_DEGREES
-                );
+        Vec3 leftDirection = rotateAroundY(
+                direction,
+                -MULTISHOT_SPREAD_DEGREES
+        );
 
         if (simulateTrajectory(
                 startPosition,
@@ -214,14 +158,10 @@ public final class ProjectileAimTracker {
             return true;
         }
 
-        /*
-         * Right projectile.
-         */
-        Vec3 rightDirection =
-                rotateAroundY(
-                        direction,
-                        MULTISHOT_SPREAD_DEGREES
-                );
+        Vec3 rightDirection = rotateAroundY(
+                direction,
+                MULTISHOT_SPREAD_DEGREES
+        );
 
         return simulateTrajectory(
                 startPosition,
@@ -235,22 +175,12 @@ public final class ProjectileAimTracker {
             Vec3 direction,
             double degrees
     ) {
-        double radians =
-                Math.toRadians(degrees);
+        double radians = Math.toRadians(degrees);
+        double cos = Math.cos(radians);
+        double sin = Math.sin(radians);
 
-        double cos =
-                Math.cos(radians);
-
-        double sin =
-                Math.sin(radians);
-
-        double x =
-                direction.x * cos
-                        - direction.z * sin;
-
-        double z =
-                direction.x * sin
-                        + direction.z * cos;
+        double x = direction.x * cos - direction.z * sin;
+        double z = direction.x * sin + direction.z * cos;
 
         return new Vec3(
                 x,
@@ -281,9 +211,7 @@ public final class ProjectileAimTracker {
     ) {
         float power = drawProgress;
 
-        power =
-                (power * power + power * 2.0F)
-                        / 3.0F;
+        power = (power * power + power * 2.0F) / 3.0F;
 
         if (power > 1.0F) {
             power = 1.0F;
@@ -296,60 +224,34 @@ public final class ProjectileAimTracker {
         return power * 3.0;
     }
 
-    private static double getDistanceToTarget(
-            Vec3 startPosition,
-            Entity target
-    ) {
-        AABB targetBox =
-                target.getBoundingBox()
-                        .inflate(target.getPickRadius());
-
-        return startPosition.distanceTo(
-                targetBox.getCenter()
-        );
-    }
-
-    private static Entity findAimedEntity(
-            Minecraft client
-    ) {
-        Vec3 start =
-                client.player.getEyePosition();
-
-        Vec3 direction =
-                client.player.getViewVector(1.0F);
+    private static Entity findAimedEntity(Minecraft client) {
+        Vec3 start = client.player.getEyePosition();
+        Vec3 direction = client.player.getViewVector(1.0F);
 
         Entity closestEntity = null;
-        double closestDistance =
-                MAX_AIM_DISTANCE;
+        double closestDistance = MAX_AIM_DISTANCE;
 
-        AABB searchBox =
-                client.player
-                        .getBoundingBox()
-                        .inflate(MAX_AIM_DISTANCE);
+        AABB searchBox = client.player
+                .getBoundingBox()
+                .inflate(MAX_AIM_DISTANCE);
 
-        for (Entity entity :
-                client.player.level().getEntities(
-                        client.player,
-                        searchBox,
-                        entity -> entity.isPickable()
-                                && entity.isAlive()
-                                && entity != client.player
-                )) {
+        for (Entity entity : client.player.level().getEntities(
+                client.player,
+                searchBox,
+                entity -> entity.isPickable()
+                        && entity.isAlive()
+                        && entity != client.player
+        )) {
+            AABB entityBox = entity.getBoundingBox()
+                    .inflate(entity.getPickRadius());
 
-            AABB entityBox =
-                    entity.getBoundingBox()
-                            .inflate(entity.getPickRadius());
+            double distance = findRayIntersection(
+                    start,
+                    direction,
+                    entityBox
+            );
 
-            double distance =
-                    findRayIntersection(
-                            start,
-                            direction,
-                            entityBox
-                    );
-
-            if (distance >= 0
-                    && distance < closestDistance) {
-
+            if (distance >= 0 && distance < closestDistance) {
                 closestDistance = distance;
                 closestEntity = entity;
             }
@@ -363,15 +265,11 @@ public final class ProjectileAimTracker {
             Vec3 direction,
             AABB box
     ) {
-        Vec3 end =
-                start.add(
-                        direction.scale(
-                                MAX_AIM_DISTANCE
-                        )
-                );
+        Vec3 end = start.add(
+                direction.scale(MAX_AIM_DISTANCE)
+        );
 
-        java.util.Optional<Vec3> hit =
-                box.clip(start, end);
+        Optional<Vec3> hit = box.clip(start, end);
 
         if (hit.isEmpty()) {
             return -1.0;

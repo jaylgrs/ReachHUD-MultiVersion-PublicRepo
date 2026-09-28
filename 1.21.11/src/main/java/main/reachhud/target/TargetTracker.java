@@ -6,6 +6,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Optional;
+
 public final class TargetTracker {
 
     private static final double DISPLAY_ADVANCE = 3.0;
@@ -39,10 +41,6 @@ public final class TargetTracker {
     }
 
     private static Entity findExtendedTarget(Minecraft client) {
-        if (client.player == null) {
-            return null;
-        }
-
         double reach = ReachCalculator.getPlayerReach();
 
         if (reach < 0) {
@@ -53,15 +51,10 @@ public final class TargetTracker {
 
         Vec3 eyePosition = client.player.getEyePosition();
         Vec3 viewVector = client.player.getViewVector(1.0F);
-        Vec3 endPosition = eyePosition.add(
-                viewVector.scale(maxDistance)
-        );
+        Vec3 endPosition = eyePosition.add(viewVector.scale(maxDistance));
 
-        AABB searchBox = client.player
-                .getBoundingBox()
-                .expandTowards(
-                        viewVector.scale(maxDistance)
-                )
+        AABB searchBox = client.player.getBoundingBox()
+                .expandTowards(viewVector.scale(maxDistance))
                 .inflate(1.0);
 
         Entity closestEntity = null;
@@ -77,10 +70,7 @@ public final class TargetTracker {
             AABB entityBox = entity.getBoundingBox()
                     .inflate(entity.getPickRadius());
 
-            java.util.Optional<Vec3> hit = entityBox.clip(
-                    eyePosition,
-                    endPosition
-            );
+            Optional<Vec3> hit = entityBox.clip(eyePosition, endPosition);
 
             if (hit.isEmpty()) {
                 continue;

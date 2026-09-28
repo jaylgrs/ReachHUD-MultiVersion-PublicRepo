@@ -8,23 +8,8 @@ import net.minecraft.world.phys.Vec3;
 public final class ProjectileAimTracker {
 
     private static final double MAX_AIM_DISTANCE = 64.0;
-
-    /*
-     * Vanilla crossbow arrow projectile speed.
-     */
     private static final double CROSSBOW_ARROW_SPEED = 3.15;
-
-    /*
-     * Firework rocket initial projectile speed.
-     *
-     * Firework rockets use their own projectile movement,
-     * so they are simulated separately from arrows.
-     */
     private static final double FIREWORK_SPEED = 1.6;
-
-    /*
-     * Vanilla Multishot spread.
-     */
     private static final double MULTISHOT_SPREAD_DEGREES = 10.0;
 
     private static Entity currentTarget;
@@ -48,20 +33,12 @@ public final class ProjectileAimTracker {
             return;
         }
 
-        /*
-         * A bow only has a projectile trajectory while it
-         * is actually being drawn.
-         */
         if (weaponState.isBow()
                 && !weaponState.isUsingWeapon()) {
             clearState();
             return;
         }
 
-        /*
-         * A crossbow only has a projectile trajectory when
-         * it already contains a loaded projectile.
-         */
         if (weaponState.isCrossbow()
                 && !weaponState.isLoaded()) {
             clearState();
@@ -88,10 +65,6 @@ public final class ProjectileAimTracker {
                 target.getBoundingBox()
                         .inflate(target.getPickRadius());
 
-        /*
-         * Firework Rocket uses completely separate
-         * projectile physics.
-         */
         if (weaponState.isFirework()) {
             willHit = simulateFirework(
                     startPosition,
@@ -107,9 +80,6 @@ public final class ProjectileAimTracker {
                 return;
             }
 
-            /*
-             * Normal Arrow / Crossbow Arrow.
-             */
             if (!weaponState.hasMultishot()) {
                 willHit = simulateTrajectory(
                         startPosition,
@@ -118,13 +88,6 @@ public final class ProjectileAimTracker {
                         targetBox
                 );
             } else {
-                /*
-                 * Multishot:
-                 *
-                 * Center
-                 * -10 degrees
-                 * +10 degrees
-                 */
                 willHit = simulateMultishot(
                         startPosition,
                         direction,
@@ -184,9 +147,6 @@ public final class ProjectileAimTracker {
             double projectileSpeed,
             AABB targetBox
     ) {
-        /*
-         * Center projectile.
-         */
         if (simulateTrajectory(
                 startPosition,
                 direction,
@@ -196,9 +156,6 @@ public final class ProjectileAimTracker {
             return true;
         }
 
-        /*
-         * Left projectile.
-         */
         Vec3 leftDirection =
                 rotateAroundY(
                         direction,
@@ -214,9 +171,6 @@ public final class ProjectileAimTracker {
             return true;
         }
 
-        /*
-         * Right projectile.
-         */
         Vec3 rightDirection =
                 rotateAroundY(
                         direction,

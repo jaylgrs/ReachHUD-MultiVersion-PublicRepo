@@ -2,6 +2,7 @@ package main.reachhud.reach;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -18,7 +19,6 @@ public final class ReachCalculator {
         }
 
         Vec3 eyePosition = client.player.getEyePosition();
-
         AABB targetBox = entity.getBoundingBox();
 
         return Math.sqrt(targetBox.distanceToSqr(eyePosition));
@@ -32,18 +32,26 @@ public final class ReachCalculator {
         }
 
         return client.player.getAttributeValue(
-                net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE
+                Attributes.ENTITY_INTERACTION_RANGE
         );
     }
 
     public static boolean isWithinReach(Entity entity) {
-        double distance = getDistanceTo(entity);
-        double reach = getPlayerReach();
+        Minecraft client = Minecraft.getInstance();
 
-        if (distance < 0 || reach < 0) {
+        if (client.player == null || entity == null) {
             return false;
         }
 
-        return distance <= reach;
+        double reach = getPlayerReach();
+
+        if (reach < 0) {
+            return false;
+        }
+
+        double distanceSquared = entity.getBoundingBox()
+                .distanceToSqr(client.player.getEyePosition());
+
+        return distanceSquared <= reach * reach;
     }
 }

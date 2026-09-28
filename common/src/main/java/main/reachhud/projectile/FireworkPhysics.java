@@ -6,21 +6,8 @@ import net.minecraft.world.phys.Vec3;
 public final class FireworkPhysics {
 
     private static final double MAX_DISTANCE = 128.0;
-
-    /*
-     * Vanilla firework rocket movement.
-     *
-     * Each tick:
-     *
-     * horizontal velocity *= 1.15
-     * vertical velocity += 0.04
-     */
     private static final double HORIZONTAL_ACCELERATION = 1.15;
     private static final double VERTICAL_ACCELERATION = 0.04;
-
-    /*
-     * Small collision volume for the rocket.
-     */
     private static final double PROJECTILE_HALF_SIZE = 0.125;
 
     private FireworkPhysics() {
@@ -42,21 +29,10 @@ public final class FireworkPhysics {
 
         double travelledDistance = 0.0;
 
-        /*
-         * Fireworks have a finite lifetime in vanilla,
-         * but 200 ticks is a safe prediction limit.
-         */
         for (int tick = 0; tick < 200; tick++) {
-
             Vec3 nextPosition =
                     position.add(velocity);
 
-            /*
-             * Check the complete movement segment.
-             *
-             * This prevents a fast-moving rocket from
-             * skipping through an entity between ticks.
-             */
             if (segmentIntersectsTarget(
                     position,
                     nextPosition,
@@ -81,12 +57,6 @@ public final class FireworkPhysics {
 
             position = nextPosition;
 
-            /*
-             * Vanilla FireworkRocketEntity movement:
-             *
-             * X/Z velocity gets multiplied by 1.15.
-             * Y velocity receives +0.04.
-             */
             velocity = new Vec3(
                     velocity.x * HORIZONTAL_ACCELERATION,
                     velocity.y + VERTICAL_ACCELERATION,

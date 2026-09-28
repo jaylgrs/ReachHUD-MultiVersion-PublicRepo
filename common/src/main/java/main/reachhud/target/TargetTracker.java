@@ -6,6 +6,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Optional;
+
 public final class TargetTracker {
 
     private static final double DISPLAY_ADVANCE = 3.0;
@@ -77,7 +79,7 @@ public final class TargetTracker {
             AABB entityBox = entity.getBoundingBox()
                     .inflate(entity.getPickRadius());
 
-            java.util.Optional<Vec3> hit = entityBox.clip(
+            Optional<Vec3> hit = entityBox.clip(
                     eyePosition,
                     endPosition
             );

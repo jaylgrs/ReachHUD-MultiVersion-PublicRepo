@@ -6,17 +6,13 @@ import main.reachhud.config.ReachHudConfig;
 import main.reachhud.hud.ReachHudNotification;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class ReachHudKeybind {
 
     private static final KeyMapping.Category REACHHUD_CATEGORY =
             KeyMapping.Category.register(
-                    Identifier.fromNamespaceAndPath(
-                            ReachHUD.MOD_ID,
-                            "reachhud"
-                    )
+                    ReachHUD.id("reachhud")
             );
 
     private static KeyMapping toggleKey;
@@ -48,7 +44,6 @@ public final class ReachHudKeybind {
             boolean newState = !ReachHudConfig.isEnabled();
 
             ReachHudConfig.setEnabled(newState);
-
             ReachHudNotification.show(newState);
         }
     }

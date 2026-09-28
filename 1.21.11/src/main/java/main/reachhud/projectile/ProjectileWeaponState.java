@@ -57,7 +57,6 @@ public final class ProjectileWeaponState {
 
         ItemStack mainHand = client.player.getMainHandItem();
         ItemStack offHand = client.player.getOffhandItem();
-
         ItemStack weapon = findWeapon(mainHand, offHand);
 
         if (weapon.isEmpty()) {
@@ -71,8 +70,7 @@ public final class ProjectileWeaponState {
                     ? client.player.getTicksUsingItem()
                     : 0;
 
-            float drawProgress =
-                    calculateBowDrawProgress(useTicks);
+            float drawProgress = calculateBowDrawProgress(useTicks);
 
             return new ProjectileWeaponState(
                     WeaponType.BOW,
@@ -88,9 +86,7 @@ public final class ProjectileWeaponState {
         if (weapon.is(Items.CROSSBOW)) {
             boolean loaded = isCrossbowLoaded(weapon);
             int multishotLevel = getMultishotLevel(weapon);
-
-            ProjectileType projectileType =
-                    getCrossbowProjectileType(weapon);
+            ProjectileType projectileType = getCrossbowProjectileType(weapon);
 
             return new ProjectileWeaponState(
                     WeaponType.CROSSBOW,
@@ -107,26 +103,21 @@ public final class ProjectileWeaponState {
     }
 
     private static boolean isCrossbowLoaded(ItemStack weapon) {
-        var chargedProjectiles =
-                weapon.get(DataComponents.CHARGED_PROJECTILES);
+        var chargedProjectiles = weapon.get(DataComponents.CHARGED_PROJECTILES);
 
         return chargedProjectiles != null
-                && chargedProjectiles.getItems().size() > 0;
+                && !chargedProjectiles.getItems().isEmpty();
     }
 
-    private static ProjectileType getCrossbowProjectileType(
-            ItemStack weapon
-    ) {
-        var chargedProjectiles =
-                weapon.get(DataComponents.CHARGED_PROJECTILES);
+    private static ProjectileType getCrossbowProjectileType(ItemStack weapon) {
+        var chargedProjectiles = weapon.get(DataComponents.CHARGED_PROJECTILES);
 
         if (chargedProjectiles == null
                 || chargedProjectiles.getItems().isEmpty()) {
             return ProjectileType.NONE;
         }
 
-        ItemStack projectile =
-                chargedProjectiles.getItems().get(0);
+        ItemStack projectile = chargedProjectiles.getItems().get(0);
 
         if (projectile.is(Items.FIREWORK_ROCKET)) {
             return ProjectileType.FIREWORK;
@@ -142,26 +133,20 @@ public final class ProjectileWeaponState {
     }
 
     private static int getMultishotLevel(ItemStack weapon) {
-        ItemEnchantments enchantments =
-                weapon.get(DataComponents.ENCHANTMENTS);
+        ItemEnchantments enchantments = weapon.get(DataComponents.ENCHANTMENTS);
 
         if (enchantments == null) {
             return 0;
         }
 
         for (var entry : enchantments.entrySet()) {
-            Holder<Enchantment> enchantment =
-                    entry.getKey();
+            Holder<Enchantment> enchantment = entry.getKey();
 
-            boolean isMultishot =
-                    enchantment.unwrapKey()
-                            .map(key ->
-                                    key.toString()
-                                            .equals(
-                                                    "ResourceKey[minecraft:enchantment / minecraft:multishot]"
-                                            )
-                            )
-                            .orElse(false);
+            boolean isMultishot = enchantment.unwrapKey()
+                    .map(key -> key.toString().equals(
+                            "ResourceKey[minecraft:enchantment / minecraft:multishot]"
+                    ))
+                    .orElse(false);
 
             if (isMultishot) {
                 return entry.getIntValue();

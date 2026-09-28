@@ -1,14 +1,14 @@
 package main.reachhud.config;
 
-import main.reachhud.ReachHUD;
-import net.fabricmc.loader.api.FabricLoader;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+
+import main.reachhud.ReachHUD;
+import net.fabricmc.loader.api.FabricLoader;
 
 public final class ReachHudConfig {
 
@@ -35,10 +35,22 @@ public final class ReachHudConfig {
         try (InputStream input = Files.newInputStream(CONFIG_PATH)) {
             properties.load(input);
 
-            enabled = Boolean.parseBoolean(
-                    properties.getProperty(HUD_ENABLED, "true")
+            String value = properties.getProperty(
+                    HUD_ENABLED,
+                    Boolean.TRUE.toString()
             );
 
+            if ("true".equalsIgnoreCase(value)
+                    || "false".equalsIgnoreCase(value)) {
+                enabled = Boolean.parseBoolean(value);
+            } else {
+                enabled = true;
+
+                ReachHUD.LOGGER.warn(
+                        "Invalid value for '{}'. Using default: true.",
+                        HUD_ENABLED
+                );
+            }
         } catch (IOException exception) {
             enabled = true;
 
@@ -60,13 +72,14 @@ public final class ReachHudConfig {
         try {
             Files.createDirectories(CONFIG_PATH.getParent());
 
-            try (OutputStream output = Files.newOutputStream(CONFIG_PATH)) {
+            try (OutputStream output =
+                         Files.newOutputStream(CONFIG_PATH)) {
+
                 properties.store(
                         output,
                         "ReachHUD Configuration"
                 );
             }
-
         } catch (IOException exception) {
             ReachHUD.LOGGER.error(
                     "Failed to save ReachHUD configuration.",

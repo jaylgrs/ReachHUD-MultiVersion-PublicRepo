@@ -1,12 +1,18 @@
 package main.reachhud.hud.renderer;
 
+import java.util.Locale;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.Entity;
 
-import java.util.Locale;
-
 public final class ReachHudProjectileRenderer {
+
+    private static final String INDICATOR = "● ";
+    private static final String AIM_LABEL = "Aim: ";
+
+    private static final int TARGET_Y_OFFSET = 11;
+    private static final int AIM_Y_OFFSET = 23;
 
     private ReachHudProjectileRenderer() {
     }
@@ -23,20 +29,16 @@ public final class ReachHudProjectileRenderer {
             return;
         }
 
-        String targetName =
-                target.getName().getString();
+        String targetName = target.getName().getString();
 
-        String distanceText =
-                String.format(
-                        Locale.ROOT,
-                        "%.2f",
-                        distance
-                );
+        String distanceText = String.format(
+                Locale.ROOT,
+                "%.2f",
+                distance
+        );
 
         int targetColor =
-                ReachHudRenderUtils.getTargetNameColor(
-                        target
-                );
+                ReachHudRenderUtils.getTargetNameColor(target);
 
         renderHud(
                 graphics,
@@ -68,13 +70,10 @@ public final class ReachHudProjectileRenderer {
                         distance
                 );
 
-        ReachHudRenderState.cachedProjectileWillHit =
-                willHit;
+        ReachHudRenderState.cachedProjectileWillHit = willHit;
 
         ReachHudRenderState.cachedProjectileTargetColor =
-                ReachHudRenderUtils.getTargetNameColor(
-                        target
-                );
+                ReachHudRenderUtils.getTargetNameColor(target);
     }
 
     public static void renderCached(
@@ -107,17 +106,13 @@ public final class ReachHudProjectileRenderer {
             int targetNameColor,
             double alpha
     ) {
-        String aimLabel =
-                "Aim: ";
+        int indicatorWidth = client.font.width(INDICATOR);
+        int targetNameWidth = client.font.width(targetName);
+        int aimLabelWidth = client.font.width(AIM_LABEL);
+        int distanceWidth = client.font.width(distanceText);
 
-        int targetNameWidth =
-                client.font.width(targetName);
-
-        int aimLabelWidth =
-                client.font.width(aimLabel);
-
-        int distanceWidth =
-                client.font.width(distanceText);
+        int targetTotalWidth =
+                indicatorWidth + targetNameWidth;
 
         int aimTotalWidth =
                 aimLabelWidth + distanceWidth;
@@ -128,20 +123,14 @@ public final class ReachHudProjectileRenderer {
         int screenHeight =
                 client.getWindow().getGuiScaledHeight();
 
-        int centerX =
-                screenWidth / 2;
+        int centerX = screenWidth / 2;
+        int centerY = screenHeight / 2;
 
-        int centerY =
-                screenHeight / 2;
-
-        int targetY =
-                centerY + 11;
-
-        int aimY =
-                centerY + 23;
+        int targetY = centerY + TARGET_Y_OFFSET;
+        int aimY = centerY + AIM_Y_OFFSET;
 
         int targetX =
-                centerX - targetNameWidth / 2;
+                centerX - targetTotalWidth / 2;
 
         int aimX =
                 centerX - aimTotalWidth / 2;
@@ -151,15 +140,15 @@ public final class ReachHudProjectileRenderer {
                         ? 0xFF55FF55
                         : 0xFFFF5555;
 
-        int fadedTargetColor =
+        int fadedIndicatorColor =
                 ReachHudRenderUtils.applyAlpha(
                         targetNameColor,
                         alpha
                 );
 
-        int fadedDistanceColor =
+        int fadedTargetColor =
                 ReachHudRenderUtils.applyAlpha(
-                        distanceColor,
+                        0xFFFFFFFF,
                         alpha
                 );
 
@@ -169,73 +158,27 @@ public final class ReachHudProjectileRenderer {
                         alpha
                 );
 
-        int paddingHorizontal = 6;
-
-        int boxX =
-                aimX - paddingHorizontal;
-
-        int boxY =
-                aimY - 2;
-
-        int boxWidth =
-                aimTotalWidth
-                        + paddingHorizontal * 2;
-
-        int boxHeight = 12;
-
-        int backgroundColor =
+        int fadedDistanceColor =
                 ReachHudRenderUtils.applyAlpha(
-                        0x99000000,
+                        distanceColor,
                         alpha
                 );
 
-        ReachHudRenderUtils.drawRoundedBox(
+        ReachHudRenderUtils.drawText(
                 graphics,
-                boxX,
-                boxY,
-                boxWidth,
-                boxHeight,
-                backgroundColor
-        );
-
-        int accentColor =
-                willHit
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
-
-        accentColor =
-                ReachHudRenderUtils.applyAlpha(
-                        accentColor,
-                        alpha
-                );
-
-        graphics.fill(
-                boxX + 2,
-                boxY + boxHeight - 1,
-                boxX + boxWidth - 2,
-                boxY + boxHeight,
-                accentColor
-        );
-
-        int indicatorColor =
-                ReachHudRenderUtils.applyAlpha(
-                        targetNameColor,
-                        alpha
-                );
-
-        graphics.fill(
-                targetX - 6,
-                targetY + 4,
-                targetX - 3,
-                targetY + 7,
-                indicatorColor
+                client,
+                INDICATOR,
+                targetX,
+                targetY,
+                fadedIndicatorColor,
+                alpha
         );
 
         ReachHudRenderUtils.drawText(
                 graphics,
                 client,
                 targetName,
-                targetX,
+                targetX + indicatorWidth,
                 targetY,
                 fadedTargetColor,
                 alpha
@@ -244,7 +187,7 @@ public final class ReachHudProjectileRenderer {
         ReachHudRenderUtils.drawText(
                 graphics,
                 client,
-                aimLabel,
+                AIM_LABEL,
                 aimX,
                 aimY,
                 fadedLabelColor,

@@ -19,7 +19,7 @@ import net.minecraft.world.entity.Entity;
 public final class ReachHudRenderer {
 
     private static final double SMOOTH_SPEED = 0.25;
-    private static final double FADE_SPEED = 0.18;
+    private static final double FADE_SPEED = 0.75;
     private static final double MAX_DISTANCE_ADVANCE = 3.0;
 
     private static long lastFrameTime = System.nanoTime();
@@ -39,11 +39,9 @@ public final class ReachHudRenderer {
             GuiGraphicsExtractor graphics,
             DeltaTracker deltaTracker
     ) {
-        Minecraft client =
-                Minecraft.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
-        double deltaSeconds =
-                getDeltaSeconds();
+        double deltaSeconds = getDeltaSeconds();
 
         if (client.player == null
                 || client.options.hideGui
@@ -53,21 +51,11 @@ public final class ReachHudRenderer {
             return;
         }
 
-        renderNotification(
-                graphics,
-                client
-        );
+        renderNotification(graphics, client);
 
         if (!ReachHudKeybind.isEnabled()) {
-            updateHudAlpha(
-                    false,
-                    deltaSeconds
-            );
-
-            renderCachedHud(
-                    graphics,
-                    client
-            );
+            updateHudAlpha(false, deltaSeconds);
+            renderCachedHud(graphics, client);
 
             if (ReachHudRenderState.hudAlpha <= 0.001) {
                 ReachHudRenderState.clearMeleeCache();
@@ -102,50 +90,29 @@ public final class ReachHudRenderer {
             Minecraft client,
             double deltaSeconds
     ) {
-        Entity target =
-                TargetTracker.getCurrentTarget();
+        Entity target = TargetTracker.getCurrentTarget();
 
         if (target == null) {
-            updateHudAlpha(
-                    false,
-                    deltaSeconds
-            );
-
-            renderCachedMeleeHud(
-                    graphics,
-                    client
-            );
-
+            updateHudAlpha(false, deltaSeconds);
+            renderCachedMeleeHud(graphics, client);
             ReachHudRenderState.resetMeleeSmoothingOnly();
             return;
         }
 
-        double distance =
-                ReachCalculator.getDistanceTo(target);
-
-        double reach =
-                ReachCalculator.getPlayerReach();
+        double distance = ReachCalculator.getDistanceTo(target);
+        double reach = ReachCalculator.getPlayerReach();
 
         if (distance < 0
                 || reach < 0
                 || distance > reach + MAX_DISTANCE_ADVANCE) {
 
-            updateHudAlpha(
-                    false,
-                    deltaSeconds
-            );
-
-            renderCachedMeleeHud(
-                    graphics,
-                    client
-            );
-
+            updateHudAlpha(false, deltaSeconds);
+            renderCachedMeleeHud(graphics, client);
             ReachHudRenderState.resetMeleeSmoothingOnly();
             return;
         }
 
-        boolean withinReach =
-                distance <= reach;
+        boolean withinReach = distance <= reach;
 
         updateMeleeSmoothing(
                 target,
@@ -161,10 +128,7 @@ public final class ReachHudRenderer {
 
         ReachHudRenderState.clearProjectileCache();
 
-        updateHudAlpha(
-                true,
-                deltaSeconds
-        );
+        updateHudAlpha(true, deltaSeconds);
 
         ReachHudMeleeRenderer.renderCached(
                 graphics,
@@ -178,44 +142,25 @@ public final class ReachHudRenderer {
             Minecraft client,
             double deltaSeconds
     ) {
-        Entity target =
-                ProjectileAimTracker.getCurrentTarget();
+        Entity target = ProjectileAimTracker.getCurrentTarget();
 
         if (target == null) {
-            updateHudAlpha(
-                    false,
-                    deltaSeconds
-            );
-
-            renderCachedProjectileHud(
-                    graphics,
-                    client
-            );
-
+            updateHudAlpha(false, deltaSeconds);
+            renderCachedProjectileHud(graphics, client);
             ReachHudRenderState.resetProjectileSmoothing();
             return;
         }
 
-        double distance =
-                ProjectileAimTracker.getTargetDistance();
+        double distance = ProjectileAimTracker.getTargetDistance();
 
         if (distance < 0) {
-            updateHudAlpha(
-                    false,
-                    deltaSeconds
-            );
-
-            renderCachedProjectileHud(
-                    graphics,
-                    client
-            );
-
+            updateHudAlpha(false, deltaSeconds);
+            renderCachedProjectileHud(graphics, client);
             ReachHudRenderState.resetProjectileSmoothing();
             return;
         }
 
-        boolean willHit =
-                ProjectileAimTracker.willHit();
+        boolean willHit = ProjectileAimTracker.willHit();
 
         updateProjectileSmoothing(
                 target,
@@ -231,10 +176,7 @@ public final class ReachHudRenderer {
 
         ReachHudRenderState.clearMeleeCache();
 
-        updateHudAlpha(
-                true,
-                deltaSeconds
-        );
+        updateHudAlpha(true, deltaSeconds);
 
         ReachHudProjectileRenderer.renderCached(
                 graphics,
@@ -252,21 +194,17 @@ public final class ReachHudRenderer {
                 || ReachHudRenderState.displayedDistance < 0) {
 
             ReachHudRenderState.lastTarget = target;
-            ReachHudRenderState.displayedDistance =
-                    distance;
-
+            ReachHudRenderState.displayedDistance = distance;
             return;
         }
 
-        double smoothingFactor =
-                getSmoothingFactor(
-                        SMOOTH_SPEED,
-                        deltaSeconds
-                );
+        double smoothingFactor = getSmoothingFactor(
+                SMOOTH_SPEED,
+                deltaSeconds
+        );
 
         ReachHudRenderState.displayedDistance +=
-                (distance
-                        - ReachHudRenderState.displayedDistance)
+                (distance - ReachHudRenderState.displayedDistance)
                         * smoothingFactor;
     }
 
@@ -278,20 +216,15 @@ public final class ReachHudRenderer {
         if (ReachHudRenderState.lastProjectileTarget != target
                 || ReachHudRenderState.displayedProjectileDistance < 0) {
 
-            ReachHudRenderState.lastProjectileTarget =
-                    target;
-
-            ReachHudRenderState.displayedProjectileDistance =
-                    distance;
-
+            ReachHudRenderState.lastProjectileTarget = target;
+            ReachHudRenderState.displayedProjectileDistance = distance;
             return;
         }
 
-        double smoothingFactor =
-                getSmoothingFactor(
-                        SMOOTH_SPEED,
-                        deltaSeconds
-                );
+        double smoothingFactor = getSmoothingFactor(
+                SMOOTH_SPEED,
+                deltaSeconds
+        );
 
         ReachHudRenderState.displayedProjectileDistance +=
                 (distance
@@ -303,27 +236,22 @@ public final class ReachHudRenderer {
             boolean visible,
             double deltaSeconds
     ) {
-        double targetAlpha =
-                visible ? 1.0 : 0.0;
+        double targetAlpha = visible ? 1.0 : 0.0;
 
-        double smoothingFactor =
-                getSmoothingFactor(
-                        FADE_SPEED,
-                        deltaSeconds
-                );
+        double smoothingFactor = getSmoothingFactor(
+                FADE_SPEED,
+                deltaSeconds
+        );
 
         ReachHudRenderState.hudAlpha +=
-                (targetAlpha
-                        - ReachHudRenderState.hudAlpha)
+                (targetAlpha - ReachHudRenderState.hudAlpha)
                         * smoothingFactor;
 
         if (Math.abs(
-                targetAlpha
-                        - ReachHudRenderState.hudAlpha
+                targetAlpha - ReachHudRenderState.hudAlpha
         ) < 0.001) {
 
-            ReachHudRenderState.hudAlpha =
-                    targetAlpha;
+            ReachHudRenderState.hudAlpha = targetAlpha;
         }
     }
 
@@ -331,8 +259,7 @@ public final class ReachHudRenderer {
             double speed,
             double deltaSeconds
     ) {
-        return 1.0
-                - Math.exp(
+        return 1.0 - Math.exp(
                 -speed
                         * deltaSeconds
                         * 60.0
@@ -340,8 +267,7 @@ public final class ReachHudRenderer {
     }
 
     private static double getDeltaSeconds() {
-        long currentTime =
-                System.nanoTime();
+        long currentTime = System.nanoTime();
 
         double deltaSeconds =
                 (currentTime - lastFrameTime)
@@ -360,19 +286,12 @@ public final class ReachHudRenderer {
             Minecraft client
     ) {
         if (!ReachHudRenderState.cachedMeleeTargetName.isEmpty()) {
-            renderCachedMeleeHud(
-                    graphics,
-                    client
-            );
-
+            renderCachedMeleeHud(graphics, client);
             return;
         }
 
         if (!ReachHudRenderState.cachedProjectileTargetName.isEmpty()) {
-            renderCachedProjectileHud(
-                    graphics,
-                    client
-            );
+            renderCachedProjectileHud(graphics, client);
         }
     }
 
@@ -406,33 +325,22 @@ public final class ReachHudRenderer {
             return;
         }
 
-        String text =
-                ReachHudNotification.isEnabled()
-                        ? "ReachHUD: Active"
-                        : "ReachHUD: Inactive";
+        String text = ReachHudNotification.isEnabled()
+                ? "ReachHUD: Active"
+                : "ReachHUD: Inactive";
 
-        int screenWidth =
-                client.getWindow().getGuiScaledWidth();
+        int screenWidth = client.getWindow().getGuiScaledWidth();
+        int screenHeight = client.getWindow().getGuiScaledHeight();
+        int textWidth = client.font.width(text);
 
-        int screenHeight =
-                client.getWindow().getGuiScaledHeight();
+        int x = (screenWidth - textWidth) / 2;
+        int y = screenHeight - 58;
 
-        int textWidth =
-                client.font.width(text);
+        int textColor = ReachHudNotification.isEnabled()
+                ? 0xFF55FF55
+                : 0xFFFF5555;
 
-        int x =
-                (screenWidth - textWidth) / 2;
-
-        int y =
-                screenHeight - 58;
-
-        int textColor =
-                ReachHudNotification.isEnabled()
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
-
-        Component component =
-                Component.literal(text);
+        Component component = Component.literal(text);
 
         graphics.text(
                 client.font,

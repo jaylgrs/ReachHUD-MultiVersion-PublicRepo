@@ -5,6 +5,10 @@ import net.minecraft.client.gui.GuiGraphics;
 
 final class ReachHudMeleeRenderer {
 
+    private static final String INDICATOR = "● ";
+    private static final int TARGET_Y_OFFSET = 11;
+    private static final int REACH_Y_OFFSET = 23;
+
     private ReachHudMeleeRenderer() {
     }
 
@@ -22,45 +26,39 @@ final class ReachHudMeleeRenderer {
             return;
         }
 
+        int indicatorWidth = client.font.width(INDICATOR);
         int targetNameWidth = client.font.width(targetName);
         int reachLabelWidth = client.font.width(reachLabel);
         int distanceWidth = client.font.width(distanceText);
 
-        int reachTotalWidth =
-                reachLabelWidth + distanceWidth;
+        int targetTotalWidth = indicatorWidth + targetNameWidth;
+        int reachTotalWidth = reachLabelWidth + distanceWidth;
 
-        int screenWidth =
-                client.getWindow().getGuiScaledWidth();
-
-        int screenHeight =
-                client.getWindow().getGuiScaledHeight();
+        int screenWidth = client.getWindow().getGuiScaledWidth();
+        int screenHeight = client.getWindow().getGuiScaledHeight();
 
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
 
-        int targetY = centerY + 11;
-        int reachY = centerY + 23;
+        int targetY = centerY + TARGET_Y_OFFSET;
+        int reachY = centerY + REACH_Y_OFFSET;
 
-        int targetX =
-                centerX - targetNameWidth / 2;
+        int targetX = centerX - targetTotalWidth / 2;
+        int reachX = centerX - reachTotalWidth / 2;
 
-        int reachX =
-                centerX - reachTotalWidth / 2;
+        int distanceColor = withinReach
+                ? 0xFF55FF55
+                : 0xFFFF5555;
 
-        int distanceColor =
-                withinReach
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
-
-        int fadedTargetColor =
+        int fadedIndicatorColor =
                 ReachHudRenderUtils.applyAlpha(
                         targetNameColor,
                         alpha
                 );
 
-        int fadedDistanceColor =
+        int fadedTargetColor =
                 ReachHudRenderUtils.applyAlpha(
-                        distanceColor,
+                        0xFFFFFFFF,
                         alpha
                 );
 
@@ -70,78 +68,27 @@ final class ReachHudMeleeRenderer {
                         alpha
                 );
 
-        int paddingHorizontal = 6;
-
-        int boxX = reachX - paddingHorizontal;
-        int boxY = reachY - 2;
-
-        int boxWidth =
-                reachTotalWidth + paddingHorizontal * 2;
-
-        int boxHeight = 12;
-
-        int backgroundColor =
+        int fadedDistanceColor =
                 ReachHudRenderUtils.applyAlpha(
-                        0x99000000,
+                        distanceColor,
                         alpha
                 );
 
-        ReachHudRenderUtils.drawRoundedBox(
+        ReachHudRenderUtils.drawText(
                 graphics,
-                boxX,
-                boxY,
-                boxWidth,
-                boxHeight,
-                backgroundColor
-        );
-
-        int accentColor =
-                withinReach
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
-
-        accentColor =
-                ReachHudRenderUtils.applyAlpha(
-                        accentColor,
-                        alpha
-                );
-
-        int accentX = boxX + 2;
-        int accentY = boxY + boxHeight - 1;
-        int accentWidth = boxWidth - 4;
-
-        graphics.fill(
-                accentX,
-                accentY,
-                accentX + accentWidth,
-                accentY + 1,
-                accentColor
-        );
-
-        int indicatorColor =
-                ReachHudRenderUtils.applyAlpha(
-                        targetNameColor,
-                        alpha
-                );
-
-        int indicatorSize = 3;
-
-        int indicatorX = targetX - 6;
-        int indicatorY = targetY + 4;
-
-        graphics.fill(
-                indicatorX,
-                indicatorY,
-                indicatorX + indicatorSize,
-                indicatorY + indicatorSize,
-                indicatorColor
+                client,
+                INDICATOR,
+                targetX,
+                targetY,
+                fadedIndicatorColor,
+                alpha
         );
 
         ReachHudRenderUtils.drawText(
                 graphics,
                 client,
                 targetName,
-                targetX,
+                targetX + indicatorWidth,
                 targetY,
                 fadedTargetColor,
                 alpha

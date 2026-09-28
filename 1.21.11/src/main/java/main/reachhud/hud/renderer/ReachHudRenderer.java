@@ -18,7 +18,10 @@ import net.minecraft.world.entity.Entity;
 public final class ReachHudRenderer {
 
     private static final double SMOOTH_SPEED = 0.25;
-    private static final double FADE_SPEED = 0.18;
+    private static final double FADE_SPEED = 0.75;
+
+    private static final String REACH_LABEL = "Reach: ";
+    private static final String AIM_LABEL = "Aim: ";
 
     private ReachHudRenderer() {
     }
@@ -68,9 +71,7 @@ public final class ReachHudRenderer {
         Entity target = TargetTracker.getCurrentTarget();
 
         if (target == null) {
-            updateHudAlpha(false, deltaTicks);
-            renderCachedHud(graphics, client);
-            resetMeleeSmoothingOnly();
+            hideMeleeHud(graphics, client, deltaTicks);
             return;
         }
 
@@ -78,16 +79,12 @@ public final class ReachHudRenderer {
         double reach = ReachCalculator.getPlayerReach();
 
         if (distance < 0 || reach < 0) {
-            updateHudAlpha(false, deltaTicks);
-            renderCachedHud(graphics, client);
-            resetMeleeSmoothingOnly();
+            hideMeleeHud(graphics, client, deltaTicks);
             return;
         }
 
         if (distance > reach + 3.0) {
-            updateHudAlpha(false, deltaTicks);
-            renderCachedHud(graphics, client);
-            resetMeleeSmoothingOnly();
+            hideMeleeHud(graphics, client, deltaTicks);
             return;
         }
 
@@ -96,7 +93,6 @@ public final class ReachHudRenderer {
         updateSmoothedDistance(target, distance, deltaTicks);
 
         String targetName = target.getName().getString();
-        String reachLabel = "Reach: ";
         String distanceText = formatDistance(
                 ReachHudRenderState.displayedDistance
         );
@@ -115,7 +111,7 @@ public final class ReachHudRenderer {
                 graphics,
                 client,
                 targetName,
-                reachLabel,
+                REACH_LABEL,
                 distanceText,
                 withinReach,
                 targetNameColor,
@@ -128,28 +124,21 @@ public final class ReachHudRenderer {
             Minecraft client,
             double deltaTicks
     ) {
-        Entity target =
-                ProjectileAimTracker.getCurrentTarget();
+        Entity target = ProjectileAimTracker.getCurrentTarget();
 
         if (target == null) {
-            updateHudAlpha(false, deltaTicks);
-            renderCachedHud(graphics, client);
-            resetProjectileSmoothing();
+            hideProjectileHud(graphics, client, deltaTicks);
             return;
         }
 
-        double distance =
-                ProjectileAimTracker.getTargetDistance();
+        double distance = ProjectileAimTracker.getTargetDistance();
 
         if (distance < 0) {
-            updateHudAlpha(false, deltaTicks);
-            renderCachedHud(graphics, client);
-            resetProjectileSmoothing();
+            hideProjectileHud(graphics, client, deltaTicks);
             return;
         }
 
-        boolean willHit =
-                ProjectileAimTracker.willHit();
+        boolean willHit = ProjectileAimTracker.willHit();
 
         updateSmoothedProjectileDistance(
                 target,
@@ -157,15 +146,10 @@ public final class ReachHudRenderer {
                 deltaTicks
         );
 
-        String targetName =
-                target.getName().getString();
-
-        String aimLabel = "Aim: ";
-
-        String distanceText =
-                formatDistance(
-                        ReachHudRenderState.displayedProjectileDistance
-                );
+        String targetName = target.getName().getString();
+        String distanceText = formatDistance(
+                ReachHudRenderState.displayedProjectileDistance
+        );
 
         int targetNameColor =
                 ReachHudRenderUtils.getTargetNameColor(target);
@@ -181,7 +165,7 @@ public final class ReachHudRenderer {
                 graphics,
                 client,
                 targetName,
-                aimLabel,
+                AIM_LABEL,
                 distanceText,
                 willHit,
                 targetNameColor,
@@ -203,23 +187,16 @@ public final class ReachHudRenderer {
             return;
         }
 
-        int targetNameWidth =
-                client.font.width(targetName);
+        int indicatorWidth = client.font.width("● ");
+        int targetNameWidth = client.font.width(targetName);
+        int aimLabelWidth = client.font.width(aimLabel);
+        int distanceWidth = client.font.width(distanceText);
 
-        int aimLabelWidth =
-                client.font.width(aimLabel);
+        int targetTotalWidth = indicatorWidth + targetNameWidth;
+        int aimTotalWidth = aimLabelWidth + distanceWidth;
 
-        int distanceWidth =
-                client.font.width(distanceText);
-
-        int aimTotalWidth =
-                aimLabelWidth + distanceWidth;
-
-        int screenWidth =
-                client.getWindow().getGuiScaledWidth();
-
-        int screenHeight =
-                client.getWindow().getGuiScaledHeight();
+        int screenWidth = client.getWindow().getGuiScaledWidth();
+        int screenHeight = client.getWindow().getGuiScaledHeight();
 
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
@@ -227,26 +204,22 @@ public final class ReachHudRenderer {
         int targetY = centerY + 11;
         int aimY = centerY + 23;
 
-        int targetX =
-                centerX - targetNameWidth / 2;
+        int targetX = centerX - targetTotalWidth / 2;
+        int aimX = centerX - aimTotalWidth / 2;
 
-        int aimX =
-                centerX - aimTotalWidth / 2;
+        int distanceColor = willHit
+                ? 0xFF55FF55
+                : 0xFFFF5555;
 
-        int distanceColor =
-                willHit
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
-
-        int fadedTargetColor =
+        int fadedIndicatorColor =
                 ReachHudRenderUtils.applyAlpha(
                         targetNameColor,
                         alpha
                 );
 
-        int fadedDistanceColor =
+        int fadedTargetColor =
                 ReachHudRenderUtils.applyAlpha(
-                        distanceColor,
+                        0xFFFFFFFF,
                         alpha
                 );
 
@@ -256,78 +229,27 @@ public final class ReachHudRenderer {
                         alpha
                 );
 
-        int paddingHorizontal = 6;
-
-        int boxX = aimX - paddingHorizontal;
-        int boxY = aimY - 2;
-
-        int boxWidth =
-                aimTotalWidth + paddingHorizontal * 2;
-
-        int boxHeight = 12;
-
-        int backgroundColor =
+        int fadedDistanceColor =
                 ReachHudRenderUtils.applyAlpha(
-                        0x99000000,
+                        distanceColor,
                         alpha
                 );
 
-        ReachHudRenderUtils.drawRoundedBox(
+        ReachHudRenderUtils.drawText(
                 graphics,
-                boxX,
-                boxY,
-                boxWidth,
-                boxHeight,
-                backgroundColor
-        );
-
-        int accentColor =
-                willHit
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
-
-        accentColor =
-                ReachHudRenderUtils.applyAlpha(
-                        accentColor,
-                        alpha
-                );
-
-        int accentX = boxX + 2;
-        int accentY = boxY + boxHeight - 1;
-        int accentWidth = boxWidth - 4;
-
-        graphics.fill(
-                accentX,
-                accentY,
-                accentX + accentWidth,
-                accentY + 1,
-                accentColor
-        );
-
-        int indicatorColor =
-                ReachHudRenderUtils.applyAlpha(
-                        targetNameColor,
-                        alpha
-                );
-
-        int indicatorSize = 3;
-
-        int indicatorX = targetX - 6;
-        int indicatorY = targetY + 4;
-
-        graphics.fill(
-                indicatorX,
-                indicatorY,
-                indicatorX + indicatorSize,
-                indicatorY + indicatorSize,
-                indicatorColor
+                client,
+                "● ",
+                targetX,
+                targetY,
+                fadedIndicatorColor,
+                alpha
         );
 
         ReachHudRenderUtils.drawText(
                 graphics,
                 client,
                 targetName,
-                targetX,
+                targetX + indicatorWidth,
                 targetY,
                 fadedTargetColor,
                 alpha
@@ -358,7 +280,9 @@ public final class ReachHudRenderer {
             GuiGraphics graphics,
             Minecraft client
     ) {
-        if (ReachHudRenderState.hudAlpha <= 0.001) {
+        double alpha = ReachHudRenderState.hudAlpha;
+
+        if (alpha <= 0.001) {
             return;
         }
 
@@ -367,13 +291,12 @@ public final class ReachHudRenderer {
                     graphics,
                     client,
                     ReachHudRenderState.cachedProjectileTargetName,
-                    "Aim: ",
+                    AIM_LABEL,
                     ReachHudRenderState.cachedProjectileDistanceText,
                     ReachHudRenderState.cachedProjectileWillHit,
                     ReachHudRenderState.cachedProjectileTargetColor,
-                    ReachHudRenderState.hudAlpha
+                    alpha
             );
-
             return;
         }
 
@@ -382,32 +305,58 @@ public final class ReachHudRenderer {
                     graphics,
                     client,
                     ReachHudRenderState.cachedMeleeTargetName,
-                    "Reach: ",
+                    REACH_LABEL,
                     ReachHudRenderState.cachedMeleeDistanceText,
                     ReachHudRenderState.cachedMeleeWithinReach,
                     ReachHudRenderState.cachedMeleeTargetColor,
-                    ReachHudRenderState.hudAlpha
+                    alpha
             );
         }
+    }
+
+    private static void hideMeleeHud(
+            GuiGraphics graphics,
+            Minecraft client,
+            double deltaTicks
+    ) {
+        updateHudAlpha(false, deltaTicks);
+        renderCachedHud(graphics, client);
+        resetMeleeSmoothingOnly();
+    }
+
+    private static void hideProjectileHud(
+            GuiGraphics graphics,
+            Minecraft client,
+            double deltaTicks
+    ) {
+        updateHudAlpha(false, deltaTicks);
+        renderCachedHud(graphics, client);
+        resetProjectileSmoothing();
     }
 
     private static void updateHudAlpha(
             boolean visible,
             double deltaTicks
     ) {
-        double targetAlpha =
-                visible ? 1.0 : 0.0;
-
+        double targetAlpha = visible ? 1.0 : 0.0;
         double difference =
                 targetAlpha - ReachHudRenderState.hudAlpha;
 
-        double factor =
-                getSmoothingFactor(FADE_SPEED, deltaTicks);
-
-        ReachHudRenderState.hudAlpha +=
-                difference * factor;
-
         if (Math.abs(difference) < 0.005) {
+            ReachHudRenderState.hudAlpha = targetAlpha;
+            return;
+        }
+
+        double factor = getSmoothingFactor(
+                FADE_SPEED,
+                deltaTicks
+        );
+
+        ReachHudRenderState.hudAlpha += difference * factor;
+
+        if (Math.abs(
+                targetAlpha - ReachHudRenderState.hudAlpha
+        ) < 0.005) {
             ReachHudRenderState.hudAlpha = targetAlpha;
         }
     }
@@ -425,19 +374,21 @@ public final class ReachHudRenderer {
             return;
         }
 
-        double factor =
-                getSmoothingFactor(SMOOTH_SPEED, deltaTicks);
+        double factor = getSmoothingFactor(
+                SMOOTH_SPEED,
+                deltaTicks
+        );
 
         ReachHudRenderState.displayedDistance +=
-                (actualDistance
-                        - ReachHudRenderState.displayedDistance)
-                        * factor;
+                (
+                        actualDistance
+                                - ReachHudRenderState.displayedDistance
+                ) * factor;
 
         if (Math.abs(
                 actualDistance
                         - ReachHudRenderState.displayedDistance
         ) < 0.005) {
-
             ReachHudRenderState.displayedDistance = actualDistance;
         }
     }
@@ -456,19 +407,21 @@ public final class ReachHudRenderer {
             return;
         }
 
-        double factor =
-                getSmoothingFactor(SMOOTH_SPEED, deltaTicks);
+        double factor = getSmoothingFactor(
+                SMOOTH_SPEED,
+                deltaTicks
+        );
 
         ReachHudRenderState.displayedProjectileDistance +=
-                (actualDistance
-                        - ReachHudRenderState.displayedProjectileDistance)
-                        * factor;
+                (
+                        actualDistance
+                                - ReachHudRenderState.displayedProjectileDistance
+                ) * factor;
 
         if (Math.abs(
                 actualDistance
                         - ReachHudRenderState.displayedProjectileDistance
         ) < 0.005) {
-
             ReachHudRenderState.displayedProjectileDistance =
                     actualDistance;
         }
@@ -520,30 +473,20 @@ public final class ReachHudRenderer {
             return;
         }
 
-        String text =
-                ReachHudNotification.isEnabled()
-                        ? "ReachHUD: Active"
-                        : "ReachHUD: Inactive";
+        String text = ReachHudNotification.isEnabled()
+                ? "ReachHUD: Active"
+                : "ReachHUD: Inactive";
 
-        int screenWidth =
-                client.getWindow().getGuiScaledWidth();
+        int screenWidth = client.getWindow().getGuiScaledWidth();
+        int screenHeight = client.getWindow().getGuiScaledHeight();
+        int textWidth = client.font.width(text);
 
-        int screenHeight =
-                client.getWindow().getGuiScaledHeight();
+        int x = (screenWidth - textWidth) / 2;
+        int y = screenHeight - 58;
 
-        int textWidth =
-                client.font.width(text);
-
-        int x =
-                (screenWidth - textWidth) / 2;
-
-        int y =
-                screenHeight - 58;
-
-        int textColor =
-                ReachHudNotification.isEnabled()
-                        ? 0xFF55FF55
-                        : 0xFFFF5555;
+        int textColor = ReachHudNotification.isEnabled()
+                ? 0xFF55FF55
+                : 0xFFFF5555;
 
         ReachHudRenderUtils.drawText(
                 graphics,
